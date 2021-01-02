@@ -4,17 +4,20 @@ import {
   handleDeleteDialog,
   handleAddDialog,
   handleActionDialog,
-  handleReadingState,
   handleReadingBook,
-  handleReadingEpub,
-} from "../../redux/actions/book";
-
-import { stateType } from "../../redux/store";
+} from "../../store/actions/book";
+import {
+  handleMessageBox,
+  handleMessage,
+  handleFetchBooks,
+} from "../../store/actions/manager";
+import { stateType } from "../../store";
 import { withNamespaces } from "react-i18next";
 import ActionDialog from "./component";
 
 const mapStateToProps = (state: stateType) => {
   return {
+    mode: state.sidebar.mode,
     currentEpub: state.book.currentEpub,
     currentBook: state.book.currentBook,
   };
@@ -23,10 +26,11 @@ const actionCreator = {
   handleEditDialog,
   handleAddDialog,
   handleDeleteDialog,
-  handleReadingState,
   handleReadingBook,
-  handleReadingEpub,
   handleActionDialog,
+  handleMessageBox,
+  handleMessage,
+  handleFetchBooks,
 };
 export default connect(
   mapStateToProps,

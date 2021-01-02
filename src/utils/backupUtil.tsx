@@ -3,45 +3,62 @@ import BookModel from "../model/Book";
 import NoteModel from "../model/Note";
 import BookmarkModel from "../model/Bookmark";
 import DropboxUtil from "./syncUtils/dropbox";
-import OndriveUtil from "./syncUtils/onedrive";
-import _ from "lodash";
+import localforage from "localforage";
 
 let JSZip = (window as any).JSZip;
 class BackupUtil {
-  static backup(
+  static backup = async (
     bookArr: BookModel[],
     notes: NoteModel[],
     bookmarks: BookmarkModel[],
     handleFinish: () => void,
     driveIndex: number,
     showMessage: (message: string) => void
-  ) {
+  ) => {
     let zip = new JSZip();
-    let books: BookModel[] = _.cloneDeep(bookArr);
-    let epubZip = zip.folder("epub");
+    let books = bookArr;
+    let bookZip = zip.folder("book");
+    let data: any = [];
     books &&
       books.forEach((item) => {
-        epubZip.file(`${item.name}.epub`, item.content);
+        data.push(localforage.getItem(item.key));
+        // let result = localforage.getItem(item.key);
+        // console.log(result);
+        // results.forEach((item) => {
+        //   epubZip.file(`${item.name}.epub`, item.content);
+        // });
+        // epubZip.file(`${item.name}.epub`, result);
       });
-    books &&
-      books.forEach((item) => {
-        delete item.content;
-      });
-    let dataZip = zip.folder("data");
-    dataZip
+    let results = await Promise.all(data);
+    for (let i = 0; i < books.length; i++) {
+      if (books[i].description === "pdf") {
+        bookZip.file(`${books[i].name}.pdf`, results[i]);
+      } else {
+        bookZip.file(`${books[i].name}.epub`, results[i]);
+      }
+    }
+    let configZip = zip.folder("config");
+    configZip
       .file("notes.json", JSON.stringify(notes))
       .file("books.json", JSON.stringify(books))
       .file("bookmarks.json", JSON.stringify(bookmarks))
       .file("readerConfig.json", localStorage.getItem("readerConfig") || "")
       .file(
-        "sortCode.json",
-        localStorage.getItem("sortCode") || "{ sort: 2, order: 2 }"
+        "bookSortCode.json",
+        localStorage.getItem("bookSortCode") ||
+          JSON.stringify({ sort: 0, order: 2 })
+      )
+      .file(
+        "noteSortCode.json",
+        localStorage.getItem("noteSortCode") ||
+          JSON.stringify({ sort: 2, order: 2 })
       )
       .file("readingTime.json", localStorage.getItem("readingTime") || "")
       .file("recentBooks.json", localStorage.getItem("recentBooks") || [])
       .file("favoriteBooks.json", localStorage.getItem("favoriteBooks") || [])
       .file("shelfList.json", localStorage.getItem("shelfList") || [])
       .file("noteTags.json", localStorage.getItem("noteTags") || [])
+      .file("pdfjs.history.json", localStorage.getItem("pdfjs.history") || [])
       .file(
         "recordLocation.json",
         localStorage.getItem("recordLocation") || ""
@@ -70,7 +87,6 @@ class BackupUtil {
           case 2:
             break;
           case 3:
-            OndriveUtil.UploadFile(blob, handleFinish, showMessage);
             break;
           default:
             break;
@@ -79,7 +95,7 @@ class BackupUtil {
       .catch((err: any) => {
         console.log(err);
       });
-  }
+  };
 }
 
 export default BackupUtil;

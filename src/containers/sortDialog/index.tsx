@@ -1,23 +1,27 @@
 import { connect } from "react-redux";
 import {
-  handleSortCode,
+  handleBookSortCode,
+  handleNoteSortCode,
   handleSortDisplay,
   handleSort,
-} from "../../redux/actions/manager";
-import { stateType } from "../../redux/store";
+} from "../../store/actions/manager";
+import { stateType } from "../../store";
 import { withNamespaces } from "react-i18next";
 import SortDialog from "./component";
 
 const mapStateToProps = (state: stateType) => {
   return {
-    sortCode: state.manager.sortCode,
+    bookSortCode: state.manager.bookSortCode,
+    noteSortCode: state.manager.noteSortCode,
+    mode: state.sidebar.mode,
     isSortDisplay: state.manager.isSortDisplay,
   };
 };
 const actionCreator = {
-  handleSortCode,
+  handleBookSortCode,
   handleSortDisplay,
-  handleSort
+  handleNoteSortCode,
+  handleSort,
 };
 export default connect(
   mapStateToProps,

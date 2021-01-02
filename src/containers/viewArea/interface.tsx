@@ -16,11 +16,8 @@ export interface ViewAreaProps {
   handleOpenMenu: (isOpenMenu: boolean) => void;
   handleShowBookmark: (isShowBookmark: boolean) => void;
   handleReadingEpub: (epub: object) => void;
-  handleFetchLocations: (currentEpub: any) => void;
 }
 export interface ViewAreaStates {
-  isShowImage: boolean;
-  imageRatio: string;
   loading: boolean;
   cfiRange: any;
   contents: any;

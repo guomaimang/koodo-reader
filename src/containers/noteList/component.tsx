@@ -5,6 +5,7 @@ import { NoteListProps, NoteListState } from "./interface";
 import CardList from "../../components/cardList";
 import NoteTag from "../../components/noteTag";
 import NoteModel from "../../model/Note";
+import Empty from "../emptyPage";
 
 class NoteList extends React.Component<NoteListProps, NoteListState> {
   constructor(props: NoteListProps) {
@@ -12,6 +13,9 @@ class NoteList extends React.Component<NoteListProps, NoteListState> {
     this.state = {
       tag: [],
     };
+  }
+  componentWillMount() {
+    this.props.handleFetchNotes();
   }
   handleTag = (tag: string[]) => {
     this.setState({ tag });
@@ -24,7 +28,7 @@ class NoteList extends React.Component<NoteListProps, NoteListState> {
     return itemArr;
   };
   filterTag = (notes: NoteModel[]) => {
-    let temp = [];
+    let temp: NoteModel[] = [];
     for (let i = 0; i < notes.length; i++) {
       let flag = false;
       for (let j = 0; j < this.state.tag.length; j++) {
@@ -56,7 +60,22 @@ class NoteList extends React.Component<NoteListProps, NoteListState> {
         <div className="note-tags">
           <NoteTag {...{ handleTag: this.handleTag }} />
         </div>
-        <CardList {...noteProps} />
+        {noteProps.cards.length === 0 ? (
+          <div
+            style={{
+              position: "fixed",
+              left: 0,
+              top: 0,
+              width: "100%",
+              height: "100%",
+              zIndex: -1,
+            }}
+          >
+            <Empty />
+          </div>
+        ) : (
+          <CardList {...noteProps} />
+        )}
       </div>
     );
   }

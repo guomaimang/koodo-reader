@@ -1,11 +1,15 @@
 import BookModel from "../../model/Book";
-
-export interface ImportLocalProps {
+import { RouteComponentProps } from "react-router";
+export interface ImportLocalProps extends RouteComponentProps<any> {
   books: BookModel[];
+  deletedBooks: BookModel[];
   handleMessageBox: (isShow: boolean) => void;
   handleMessage: (message: string) => void;
   handleFetchBooks: () => void;
+  handleDrag: (isDrag: boolean) => void;
+
+  handleReadingBook: (book: BookModel) => void;
 }
 export interface ImportLocalState {
-  isRepeat: boolean;
+  isOpenFile: boolean;
 }

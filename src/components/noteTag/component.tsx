@@ -1,7 +1,9 @@
+//笔记书摘的标签
 import React from "react";
 import "./noteTag.css";
 import { NoteTagProps, NoteTagState } from "./interface";
 import TagUtil from "../../utils/tagUtil";
+import DeleteIcon from "../deleteIcon";
 import { Trans } from "react-i18next";
 
 class NoteTag extends React.Component<NoteTagProps, NoteTagState> {
@@ -10,6 +12,7 @@ class NoteTag extends React.Component<NoteTagProps, NoteTagState> {
     this.state = {
       tagIndex: [],
       isInput: false,
+      deleteIndex: -1,
     };
   }
   componentDidMount() {
@@ -28,7 +31,7 @@ class NoteTag extends React.Component<NoteTagProps, NoteTagState> {
     }
   }
   tagToIndex = (tag: string[]) => {
-    let temp = [];
+    let temp: number[] = [];
     if (!tag) return [];
     for (let i = 0; i < TagUtil.getAllTags().length; i++) {
       if (tag.indexOf(TagUtil.getAllTags()[i]) > -1) {
@@ -38,13 +41,13 @@ class NoteTag extends React.Component<NoteTagProps, NoteTagState> {
     return temp;
   };
   indextoTag = (tagIndex: number[]) => {
-    let temp = [];
+    let temp: any = [];
     for (let i = 0; i < tagIndex.length; i++) {
       temp.push(TagUtil.getAllTags()[tagIndex[i]]);
     }
     return temp;
   };
-  handleChangeTag = (index: number, item: string) => {
+  handleChangeTag = (index: number) => {
     let temp: number[] = [...this.state.tagIndex];
     if (this.state.tagIndex.indexOf(index) > -1) {
       temp = [...this.state.tagIndex];
@@ -64,14 +67,16 @@ class NoteTag extends React.Component<NoteTagProps, NoteTagState> {
       return;
     }
     TagUtil.setTags(event.target.value);
+    this.setState({ tagIndex: [] });
+    this.props.handleTag(this.indextoTag([]));
   };
   handleInput = () => {
     this.setState({ isInput: true });
   };
   render() {
     const renderTag = () => {
-      let tagNotes = TagUtil.getAllTags();
-      return tagNotes.map((item: any, index: number) => {
+      let noteTags = TagUtil.getAllTags();
+      return noteTags.map((item: any, index: number) => {
         return (
           <li
             key={item}
@@ -80,11 +85,26 @@ class NoteTag extends React.Component<NoteTagProps, NoteTagState> {
                 ? "tag-list-item active-tag "
                 : "tag-list-item"
             }
-            onClick={() => {
-              this.handleChangeTag(index, item);
-            }}
           >
-            <div className="center">
+            <div className="delete-tag-container">
+              {this.state.tagIndex.indexOf(index) > -1 &&
+              !this.props.isReading ? (
+                <DeleteIcon
+                  {...{
+                    tagName: item,
+                    mode: "tags",
+                    index: index,
+                    handleChangeTag: this.handleChangeTag,
+                  }}
+                />
+              ) : null}
+            </div>
+            <div
+              className="center"
+              onClick={() => {
+                this.handleChangeTag(index);
+              }}
+            >
               <Trans>{item}</Trans>
             </div>
           </li>
@@ -108,6 +128,7 @@ class NoteTag extends React.Component<NoteTagProps, NoteTagState> {
             onClick={() => {
               this.handleInput();
             }}
+            style={this.state.isInput ? { width: "80px" } : {}}
           >
             <div className="center">
               {this.state.isInput ? (

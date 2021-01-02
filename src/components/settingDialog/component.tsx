@@ -4,7 +4,7 @@ import "./settingDialog.css";
 import { SettingInfoProps, SettingInfoState } from "./interface";
 import { Trans } from "react-i18next";
 import i18n from "../../i18n";
-import { updateLog } from "../../utils/readerConfig";
+import { updateLog } from "../../constants/updateLog";
 import OtherUtil from "../../utils/otherUtil";
 const isElectron = require("is-electron");
 
@@ -18,21 +18,28 @@ class SettingDialog extends React.Component<
       language: OtherUtil.getReaderConfig("lang"),
       isTouch: OtherUtil.getReaderConfig("isTouch") === "yes",
       isOpenBook: OtherUtil.getReaderConfig("isOpenBook") === "yes",
-      isUseFont: OtherUtil.getReaderConfig("isUseFont") === "yes",
+      isExpandContent: OtherUtil.getReaderConfig("isExpandContent") === "yes",
+      isUseBackground: OtherUtil.getReaderConfig("isUseBackground") === "yes",
+      isShowFooter: OtherUtil.getReaderConfig("isShowFooter") !== "no",
     };
   }
   componentDidMount() {
     const lng = OtherUtil.getReaderConfig("lang");
     if (lng) {
-      i18n.changeLanguage(lng);
       this.setState({
         language: lng,
       });
     }
+    document
+      .querySelector(".lang-setting-dropdown")
+      ?.children[
+        ["zh", "cht", "en"].indexOf(OtherUtil.getReaderConfig("lang") || "zh")
+      ].setAttribute("selected", "selected");
   }
 
   changeLanguage = (lng: string) => {
     i18n.changeLanguage(lng);
+    console.log(lng, "lng");
     this.setState({ language: lng });
     OtherUtil.setReaderConfig("lang", lng);
   };
@@ -49,10 +56,14 @@ class SettingDialog extends React.Component<
       ? window.require("electron").shell.openExternal(url)
       : window.open(url);
   };
-  handleChangeFont = () => {
-    this.setState({ isUseFont: !this.state.isUseFont });
-    OtherUtil.setReaderConfig("isUseFont", this.state.isUseFont ? "no" : "yes");
-    this.state.isUseFont
+
+  handleExpandContent = () => {
+    this.setState({ isExpandContent: !this.state.isExpandContent });
+    OtherUtil.setReaderConfig(
+      "isExpandContent",
+      this.state.isExpandContent ? "no" : "yes"
+    );
+    this.state.isExpandContent
       ? this.props.handleMessage("Turn Off Successfully")
       : this.props.handleMessage("Turn On Successfully");
     this.props.handleMessageBox(true);
@@ -66,6 +77,28 @@ class SettingDialog extends React.Component<
     this.state.isOpenBook
       ? this.props.handleMessage("Turn Off Successfully")
       : this.props.handleMessage("Turn On Successfully");
+    this.props.handleMessageBox(true);
+  };
+  handleChangeBackground = () => {
+    this.setState({ isUseBackground: !this.state.isUseBackground });
+    OtherUtil.setReaderConfig(
+      "isUseBackground",
+      this.state.isUseBackground ? "no" : "yes"
+    );
+    this.state.isUseBackground
+      ? this.props.handleMessage("Turn Off Successfully")
+      : this.props.handleMessage("Turn On Successfully");
+    this.props.handleMessageBox(true);
+  };
+  handleFooterHeader = () => {
+    this.setState({ isShowFooter: !this.state.isShowFooter });
+    OtherUtil.setReaderConfig(
+      "isShowFooter",
+      this.state.isShowFooter ? "no" : "yes"
+    );
+    this.state.isShowFooter
+      ? this.props.handleMessage("Turn On Successfully")
+      : this.props.handleMessage("Turn Off Successfully");
     this.props.handleMessageBox(true);
   };
   render() {
@@ -91,9 +124,9 @@ class SettingDialog extends React.Component<
         <div className="setting-dialog-info">
           <div className="setting-dialog-new-title">
             {this.state.isTouch ? (
-              <Trans>Turn off touch mode</Trans>
+              <Trans>Turn off touch screen mode</Trans>
             ) : (
-              <Trans>Turn on touch mode</Trans>
+              <Trans>Turn on touch screen mode</Trans>
             )}
 
             <span
@@ -105,7 +138,17 @@ class SettingDialog extends React.Component<
             >
               <span
                 className="single-control-button"
-                style={this.state.isTouch ? { float: "right" } : {}}
+                style={
+                  this.state.isTouch
+                    ? {
+                        transform: "translateX(20px)",
+                        transition: "transform 0.5s ease",
+                      }
+                    : {
+                        transform: "translateX(0px)",
+                        transition: "transform 0.5s ease",
+                      }
+                }
               ></span>
             </span>
           </div>
@@ -120,45 +163,116 @@ class SettingDialog extends React.Component<
             >
               <span
                 className="single-control-button"
-                style={this.state.isOpenBook ? { float: "right" } : {}}
+                style={
+                  this.state.isOpenBook
+                    ? {
+                        transform: "translateX(20px)",
+                        transition: "transform 0.5s ease",
+                      }
+                    : {
+                        transform: "translateX(0px)",
+                        transition: "transform 0.5s ease",
+                      }
+                }
               ></span>
             </span>
           </div>
+
           <div className="setting-dialog-new-title">
-            <Trans>Use built-in font</Trans>
+            <Trans>Default expand all content</Trans>
             <span
               className="single-control-switch"
               onClick={() => {
-                this.handleChangeFont();
+                this.handleExpandContent();
               }}
               style={{ float: "right" }}
             >
               <span
                 className="single-control-button"
-                style={this.state.isUseFont ? { float: "right" } : {}}
+                style={
+                  this.state.isExpandContent
+                    ? {
+                        transform: "translateX(20px)",
+                        transition: "transform 0.5s ease",
+                      }
+                    : {
+                        transform: "translateX(0px)",
+                        transition: "transform 0.5s ease",
+                      }
+                }
               ></span>
             </span>
           </div>
           <div className="setting-dialog-new-title">
+            <Trans>Don't show footer and header</Trans>
+            <span
+              className="single-control-switch"
+              onClick={() => {
+                this.handleFooterHeader();
+              }}
+              style={{ float: "right" }}
+            >
+              <span
+                className="single-control-button"
+                style={
+                  this.state.isShowFooter
+                    ? {
+                        transform: "translateX(0px)",
+                        transition: "transform 0.5s ease",
+                      }
+                    : {
+                        transform: "translateX(20px)",
+                        transition: "transform 0.5s ease",
+                      }
+                }
+              ></span>
+            </span>
+          </div>
+          <div className="setting-dialog-new-title">
+            <Trans>Dont't use mimical background</Trans>
+            <span
+              className="single-control-switch"
+              onClick={() => {
+                this.handleChangeBackground();
+              }}
+              style={{ float: "right" }}
+            >
+              <span
+                className="single-control-button"
+                style={
+                  this.state.isUseBackground
+                    ? {
+                        transform: "translateX(20px)",
+                        transition: "transform 0.5s ease",
+                      }
+                    : {
+                        transform: "translateX(0px)",
+                        transition: "transform 0.5s ease",
+                      }
+                }
+              ></span>
+            </span>
+          </div>
+
+          <div className="setting-dialog-new-title">
             <Trans>语言 / Language</Trans>
-            <div className="setting-language">
-              {this.state.language === "cht" ? (
-                <span
-                  className="icon-english"
-                  onClick={() => this.changeLanguage("en")}
-                ></span>
-              ) : this.state.language === "en" ? (
-                <span
-                  className="icon-simplified"
-                  onClick={() => this.changeLanguage("zh")}
-                ></span>
-              ) : (
-                <span
-                  className="icon-traditional"
-                  onClick={() => this.changeLanguage("cht")}
-                ></span>
-              )}
-            </div>
+            <select
+              name=""
+              className="lang-setting-dropdown"
+              onChange={(event) => {
+                this.changeLanguage(event.target.value);
+              }}
+            >
+              <option value="zh" className="lang-setting-option">
+                简体中文
+              </option>
+              <option value="cht" className="lang-setting-option">
+                繁體中文
+              </option>
+              <option value="en" className="lang-setting-option">
+                English
+              </option>
+            </select>
           </div>
           <div className="about-this-project">
             <div
@@ -189,7 +303,11 @@ class SettingDialog extends React.Component<
         </div>
 
         <img
-          src="assets/empty.svg"
+          src={
+            process.env.NODE_ENV === "production"
+              ? "./assets/empty.svg"
+              : "../../assets/empty.svg"
+          }
           alt=""
           className="setting-dialog-illustration"
         />

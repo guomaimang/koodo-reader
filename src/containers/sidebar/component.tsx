@@ -1,35 +1,34 @@
 import React from "react";
 import "./sidebar.css";
-import { sideMenu } from "../../utils/readerConfig";
-import ShelfUtil from "../../utils/shelfUtil";
+import { sideMenu } from "../../constants/sideMenu";
 import { Trans } from "react-i18next";
 import { SidebarProps, SidebarState } from "./interface";
+import { withRouter } from "react-router-dom";
 
 class Sidebar extends React.Component<SidebarProps, SidebarState> {
   constructor(props: SidebarProps) {
     super(props);
     this.state = {
-      index: ["home", "favorite", "bookmark", "note", "digest"].indexOf(
-        this.props.mode
-      ),
-      isCollapse: true,
-      shelfIndex: -1,
+      index: 0,
+      hoverIndex: -1,
     };
+  }
+  componentDidMount() {
+    this.props.handleMode(
+      document.URL.split("/").reverse()[0] === "empty"
+        ? "home"
+        : document.URL.split("/").reverse()[0]
+    );
+    console.log(this.props.mode, "mode");
   }
   handleSidebar = (mode: string, index: number) => {
     this.setState({ index: index });
-    this.setState({ shelfIndex: -1 });
-    this.setState({ isCollapse: true });
+    this.props.history.push(`/manager/${mode}`);
     this.props.handleMode(mode);
-    this.props.handleShelfIndex(-1);
+    this.props.handleSearch(false);
   };
-  handleShelf = () => {
-    this.setState({ isCollapse: !this.state.isCollapse });
-  };
-  handleShelfItem = (index: number) => {
-    this.setState({ shelfIndex: index });
-    this.props.handleShelfIndex(index);
-    this.props.handleMode("shelf");
+  handleHover = (index: number) => {
+    this.setState({ hoverIndex: index });
   };
   render() {
     const renderSideMenu = () => {
@@ -38,7 +37,7 @@ class Sidebar extends React.Component<SidebarProps, SidebarState> {
           <li
             key={item.name}
             className={
-              this.state.index === index && this.state.shelfIndex === -1
+              this.state.index === index
                 ? "active side-menu-item"
                 : "side-menu-item"
             }
@@ -46,20 +45,33 @@ class Sidebar extends React.Component<SidebarProps, SidebarState> {
             onClick={() => {
               this.handleSidebar(item.mode, index);
             }}
+            onDrop={() => {
+              index === 1 && this.props.handleDragToLove(true);
+              index === 5 && this.props.handleDragToDelete(true);
+            }}
+            onMouseEnter={() => {
+              this.handleHover(index);
+            }}
+            onMouseLeave={() => {
+              this.handleHover(-1);
+            }}
           >
-            {this.state.index === index && this.state.shelfIndex === -1 ? (
+            {this.state.index === index ? (
               <div className="side-menu-selector-container"></div>
+            ) : null}
+            {this.state.hoverIndex === index ? (
+              <div className="side-menu-hover-container"></div>
             ) : null}
             <div
               className={
-                this.state.index === index && this.state.shelfIndex === -1
+                this.state.index === index
                   ? "side-menu-selector active-selector"
                   : "side-menu-selector "
               }
             >
               <span
                 className={
-                  this.state.index === index && this.state.shelfIndex === -1
+                  this.state.index === index
                     ? `icon-${item.icon} side-menu-icon  active-icon`
                     : `icon-${item.icon} side-menu-icon`
                 }
@@ -70,80 +82,23 @@ class Sidebar extends React.Component<SidebarProps, SidebarState> {
         );
       });
     };
-    const renderShelfList = () => {
-      const shelfList = Object.keys(ShelfUtil.getShelf());
-      //去除开头的新建书架
-      shelfList.splice(0, 1);
-      return shelfList.map((item, index) => {
-        return (
-          <li
-            key={item}
-            className={
-              this.state.shelfIndex === index
-                ? "shelf-list-item active-shelf "
-                : "shelf-list-item"
-            }
-            onClick={() => {
-              this.handleShelfItem(index);
-            }}
-          >
-            <Trans>{item}</Trans>
-          </li>
-        );
-      });
-    };
     return (
       <div className="sidebar">
         <img
           src={
             process.env.NODE_ENV === "production"
-              ? "assets/logo.png"
+              ? "./assets/logo.png"
               : "../../assets/logo.png"
           }
           alt=""
           className="logo"
         />
         <div className="side-menu-container-parent">
-          <ul className="side-menu-container">
-            {renderSideMenu()}
-            <li className="side-menu-shelf">
-              <div
-                onClick={() => {
-                  this.handleShelf();
-                }}
-              >
-                <span
-                  className="icon-shelf"
-                  style={{ marginLeft: "2px" }}
-                ></span>
-                <span style={{ marginLeft: "12px" }}>
-                  <Trans>My Shelves</Trans>
-                </span>
-
-                <div
-                  className="dropdown-icon-container"
-                  style={
-                    this.state.isCollapse ? {} : { transform: "rotate(180deg)" }
-                  }
-                >
-                  <span className="icon-dropdown sidebar-dropdown"></span>
-                </div>
-              </div>
-              <div className="shelf-list-container-parent">
-                <ul
-                  className="shelf-list-container"
-                  style={this.state.isCollapse ? { display: "none" } : {}}
-                >
-                  {renderShelfList()}
-                </ul>
-              </div>
-            </li>
-            <li className="side-menu-about"></li>
-          </ul>
+          <ul className="side-menu-container">{renderSideMenu()}</ul>
         </div>
       </div>
     );
   }
 }
 
-export default Sidebar;
+export default withRouter(Sidebar);

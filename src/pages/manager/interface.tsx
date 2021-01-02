@@ -1,9 +1,9 @@
 import BookModel from "../../model/Book";
 import NoteModel from "../../model/Note";
 import BookmarkModel from "../../model/Bookmark";
-export interface ManagerProps {
+import { RouteComponentProps } from "react-router";
+export interface ManagerProps extends RouteComponentProps<any> {
   books: BookModel[];
-  covers: { key: string; url: string }[];
   notes: NoteModel[];
   digests: NoteModel[];
   bookmarks: BookmarkModel[];
@@ -19,10 +19,11 @@ export interface ManagerProps {
   isMessage: boolean;
   isBackup: boolean;
   isSettingOpen: boolean;
+  dragItem: string;
   handleFetchBooks: () => void;
   handleFetchNotes: () => void;
   handleFetchBookmarks: () => void;
-  handleFetchSortCode: () => void;
+  handleFetchBookSortCode: () => void;
   handleFetchList: () => void;
   handleMessageBox: (isShow: boolean) => void;
   handleFirst: (isFirst: string) => void;
@@ -35,5 +36,6 @@ export interface ManagerState {
   isError: boolean;
   isCopied: boolean;
   isUpdated: boolean;
+  isDrag: boolean;
   token: string;
 }

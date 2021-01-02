@@ -1,9 +1,8 @@
-//图书导航栏
+//左侧图书导航面板
 import React from "react";
 import "./navigationPanel.css";
 import ContentList from "../../components/contentList";
-import BookNavList from "../../components/bookNavList";
-import ReadingTime from "../../utils/readingTime";
+import BookNavList from "../../components/navList";
 import { Trans } from "react-i18next";
 import { NavigationPanelProps, NavigationPanelState } from "./interface";
 import SearchBox from "../../components/searchBox";
@@ -20,13 +19,11 @@ class NavigationPanel extends React.Component<
       currentTab: "contents",
       chapters: [],
       cover: "",
-      time: ReadingTime.getTime(this.props.currentBook.key),
       isSearch: false,
       searchList: null,
       startIndex: 0,
       currentIndex: 0,
     };
-    this.timer = null;
   }
   handleSearchState = (isSearch: boolean) => {
     this.setState({ isSearch });
@@ -35,11 +32,6 @@ class NavigationPanel extends React.Component<
     this.setState({ searchList });
   };
   componentDidMount() {
-    this.timer = setInterval(() => {
-      let time = this.state.time;
-      time += 1;
-      this.setState({ time });
-    }, 1000);
     this.props.currentEpub
       .coverUrl()
       .then((url: string) => {
@@ -50,12 +42,8 @@ class NavigationPanel extends React.Component<
       });
     this.props.handleFetchBookmarks();
   }
-  componentWillUnmount() {
-    clearInterval(this.timer);
-    ReadingTime.setTime(this.props.currentBook.key, this.state.time);
-  }
 
-  handleClick = (currentTab: string) => {
+  handleChangeTab = (currentTab: string) => {
     this.setState({ currentTab });
   };
   renderSearchList = () => {
@@ -91,7 +79,7 @@ class NavigationPanel extends React.Component<
     let startIndex = this.state.startIndex;
     let currentIndex =
       startIndex > 0 ? startIndex + 2 : this.state.currentIndex;
-    let pageList = [];
+    let pageList: any[] = [];
     let total = Math.ceil(this.state.searchList.length / 10);
     if (total <= 5) {
       for (let i = 0; i < total; i++) {
@@ -198,7 +186,7 @@ class NavigationPanel extends React.Component<
                 </Trans>
               </p>
               <span className="reading-duration">
-                <Trans>Reading Time</Trans>: {Math.floor(this.state.time / 60)}
+                <Trans>Reading Time</Trans>: {Math.floor(this.props.time / 60)}
                 &nbsp;
                 <Trans>Minute</Trans>
               </span>
@@ -210,7 +198,7 @@ class NavigationPanel extends React.Component<
                 <span
                   className="book-content-title"
                   onClick={() => {
-                    this.handleClick("contents");
+                    this.handleChangeTab("contents");
                   }}
                   style={
                     this.state.currentTab === "contents"
@@ -228,7 +216,7 @@ class NavigationPanel extends React.Component<
                       : { color: "rgba(217, 217, 217, 1)" }
                   }
                   onClick={() => {
-                    this.handleClick("bookmarks");
+                    this.handleChangeTab("bookmarks");
                   }}
                 >
                   <Trans>Bookmark</Trans>
@@ -241,7 +229,7 @@ class NavigationPanel extends React.Component<
                       : { color: "rgba(217, 217, 217, 1)" }
                   }
                   onClick={() => {
-                    this.handleClick("notes");
+                    this.handleChangeTab("notes");
                   }}
                 >
                   <Trans>Note</Trans>
@@ -254,7 +242,7 @@ class NavigationPanel extends React.Component<
                       : { color: "rgba(217, 217, 217, 1)" }
                   }
                   onClick={() => {
-                    this.handleClick("digests");
+                    this.handleChangeTab("digests");
                   }}
                 >
                   <Trans>Digest</Trans>

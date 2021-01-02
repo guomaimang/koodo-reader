@@ -6,6 +6,7 @@ export interface ActionDialogProps {
   currentEpub: any;
   left: number;
   top: number;
+  mode: string;
   handleFetchBooks: () => void;
   handleDeleteDialog: (isShow: boolean) => void;
   handleFetchBookmarks: () => void;
@@ -13,8 +14,6 @@ export interface ActionDialogProps {
   handleMessageBox: (isShow: boolean) => void;
   handleMessage: (message: string) => void;
   handleReadingBook: (book: BookModel) => void;
-  handleReadingState: (isReading: boolean) => void;
-  handleReadingEpub: (epub: object) => void;
   handleEditDialog: (isShow: boolean) => void;
   handleAddDialog: (isShow: boolean) => void;
   handleActionDialog: (isShow: boolean) => void;

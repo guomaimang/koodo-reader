@@ -5,6 +5,7 @@ import { DigestListProps, DigestListStates } from "./interface";
 import CardList from "../../components/cardList";
 import NoteTag from "../../components/noteTag";
 import NoteModel from "../../model/Note";
+import Empty from "../emptyPage";
 
 class DigestList extends React.Component<DigestListProps, DigestListStates> {
   constructor(props: DigestListProps) {
@@ -12,6 +13,9 @@ class DigestList extends React.Component<DigestListProps, DigestListStates> {
     this.state = {
       tag: [],
     };
+  }
+  componentWillMount() {
+    this.props.handleFetchNotes();
   }
   handleFilter = (items: any, arr: number[]) => {
     let itemArr: any[] = [];
@@ -24,7 +28,7 @@ class DigestList extends React.Component<DigestListProps, DigestListStates> {
     this.setState({ tag });
   };
   filterTag = (digests: NoteModel[]) => {
-    let temp = [];
+    let temp: NoteModel[] = [];
     for (let i = 0; i < digests.length; i++) {
       let flag = false;
       for (let j = 0; j < this.state.tag.length; j++) {
@@ -48,12 +52,28 @@ class DigestList extends React.Component<DigestListProps, DigestListStates> {
         : this.props.digests,
       mode: "digest",
     };
+
     return (
       <div className="digest-list-container-parent">
         <div className="note-tags">
           <NoteTag {...{ handleTag: this.handleTag }} />
         </div>
-        <CardList {...noteProps} />
+        {noteProps.cards.length === 0 ? (
+          <div
+            style={{
+              position: "fixed",
+              left: 0,
+              top: 0,
+              width: "100%",
+              height: "100%",
+              zIndex: -1,
+            }}
+          >
+            <Empty />
+          </div>
+        ) : (
+          <CardList {...noteProps} />
+        )}
       </div>
     );
   }

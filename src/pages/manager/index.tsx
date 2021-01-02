@@ -1,27 +1,28 @@
 import { connect } from "react-redux";
 import {
   handleFetchBooks,
-  handleFetchSortCode,
+  handleFetchBookSortCode,
   handleFetchList,
   handleMessageBox,
   handleFirst,
-} from "../../redux/actions/manager";
+} from "../../store/actions/manager";
 import {
   handleFetchNotes,
   handleFetchBookmarks,
-} from "../../redux/actions/reader";
+} from "../../store/actions/reader";
 import "./manager.css";
-import { stateType } from "../../redux/store";
+import { stateType } from "../../store";
 import Manager from "./component";
+import { withRouter } from "react-router-dom";
 const mapStateToProps = (state: stateType) => {
   return {
     books: state.manager.books,
-    covers: state.manager.covers,
     notes: state.reader.notes,
     digests: state.reader.digests,
     bookmarks: state.reader.bookmarks,
     isReading: state.book.isReading,
     mode: state.sidebar.mode,
+    dragItem: state.book.dragItem,
     shelfIndex: state.sidebar.shelfIndex,
     isOpenEditDialog: state.book.isOpenEditDialog,
     isOpenDeleteDialog: state.book.isOpenDeleteDialog,
@@ -38,9 +39,9 @@ const actionCreator = {
   handleFetchBooks,
   handleFetchNotes,
   handleFetchBookmarks,
-  handleFetchSortCode,
+  handleFetchBookSortCode,
   handleFetchList,
   handleMessageBox,
   handleFirst,
 };
-export default connect(mapStateToProps, actionCreator)(Manager);
+export default connect(mapStateToProps, actionCreator)(withRouter(Manager));

@@ -58,7 +58,7 @@ class Header extends React.Component<HeaderProps, HeaderState> {
           ></span>
         </div>
 
-        <a href="assets/demo.epub" target="_blank" rel="noopener noreferrer">
+        <a href="./assets/demo.epub" target="_blank" rel="noopener noreferrer">
           <div
             className="download-demo-book"
             style={this.state.isBookImported ? { display: "none" } : {}}
@@ -74,7 +74,7 @@ class Header extends React.Component<HeaderProps, HeaderState> {
         >
           <Trans>Backup and Restore</Trans>
         </div>
-        <ImportLocal />
+        <ImportLocal {...{ handleDrag: this.props.handleDrag }} />
         <UpdateInfo />
       </div>
     );

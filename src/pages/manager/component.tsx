@@ -1,32 +1,32 @@
 import React from "react";
 import Sidebar from "../../containers/sidebar";
 import Header from "../../containers/header";
-import BookList from "../../containers/bookList";
-import BookmarkPage from "../../containers/bookmarkPage";
-import NoteList from "../../containers/noteList";
-import DigestList from "../../containers/digestList";
 import DeleteDialog from "../../containers/deleteDialog";
 import EditDialog from "../../containers/editDialog";
 import AddDialog from "../../containers/addDialog";
-
 import SortDialog from "../../containers/sortDialog";
 import MessageBox from "../../containers/messageBox";
-import LoadingPage from "../../containers/loadingPage";
-import BackupPage from "../../containers/backupPage";
-import EmptyPage from "../../containers/emptyPage";
-import ShelfUtil from "../../utils/shelfUtil";
-import WelcomePage from "../../containers/welcomePage";
+import BackupDialog from "../../containers/backupDialog";
+import WelcomeDialog from "../../containers/welcomeDialog";
 import "./manager.css";
 import { ManagerProps, ManagerState } from "./interface";
 import { Trans } from "react-i18next";
-import { getParamsFromUrl } from "../../utils/syncUtils/common";
-import copy from "copy-text-to-clipboard";
 import OtherUtil from "../../utils/otherUtil";
 import AddFavorite from "../../utils/addFavorite";
-import { updateLog } from "../../utils/readerConfig";
+import { updateLog } from "../../constants/updateLog";
 import UpdateDialog from "../../components/updataDialog";
 import SettingDialog from "../../components/settingDialog";
 import { isMobileOnly } from "react-device-detect";
+import { Route, Switch, Redirect } from "react-router-dom";
+import { routes } from "../../router/routes";
+import Arrow from "../../components/arrow";
+
+// declare var window: any;
+
+//判断是否为触控设备
+const is_touch_device = () => {
+  return "ontouchstart" in window;
+};
 
 class Manager extends React.Component<ManagerProps, ManagerState> {
   timer!: NodeJS.Timeout;
@@ -39,6 +39,7 @@ class Manager extends React.Component<ManagerProps, ManagerState> {
       isError: false,
       isCopied: false,
       isUpdated: false,
+      isDrag: false,
       token: "",
     };
   }
@@ -47,16 +48,26 @@ class Manager extends React.Component<ManagerProps, ManagerState> {
     this.props.handleFetchBooks();
     this.props.handleFetchNotes();
     this.props.handleFetchBookmarks();
-    this.props.handleFetchSortCode();
+    this.props.handleFetchBookSortCode();
     this.props.handleFetchList();
   }
 
   UNSAFE_componentWillReceiveProps(nextProps: ManagerProps) {
     if (nextProps.books && this.state.totalBooks !== nextProps.books.length) {
-      this.setState({
-        totalBooks: nextProps.books.length,
-      });
-      OtherUtil.setReaderConfig("totalBooks", this.state.totalBooks.toString());
+      this.setState(
+        {
+          totalBooks: nextProps.books.length,
+        },
+        () => {
+          OtherUtil.setReaderConfig(
+            "totalBooks",
+            this.state.totalBooks.toString()
+          );
+        }
+      );
+    }
+    if (nextProps.books && nextProps.books.length === 1 && !this.props.books) {
+      this.props.history.push("/manager/home");
     }
     if (this.props.mode !== nextProps.mode) {
       this.setState({
@@ -70,83 +81,29 @@ class Manager extends React.Component<ManagerProps, ManagerState> {
     }
   }
   componentDidMount() {
-    //判断是否是获取token后的回调页面
-    let url = document.location.href;
-    if (url.indexOf("error") > -1) {
-      this.setState({ isError: true });
-      return false;
-    }
-    if (url.indexOf("code") > -1) {
-      let params: any = getParamsFromUrl();
-      console.log(params, "params");
-      this.setState({ token: params.code });
-      this.setState({ isAuthed: true });
-      return false;
-    }
-    if (url.indexOf("access_token") > -1) {
-      let params: any = getParamsFromUrl();
-      console.log(params, "params");
-      this.setState({ token: params.access_token });
-      this.setState({ isAuthed: true });
-      return false;
-    }
     setTimeout(() => {
       this.setState({
         isUpdated: OtherUtil.getReaderConfig("version") !== updateLog.version,
       });
       this.props.handleFirst(OtherUtil.getReaderConfig("isFirst") || "yes");
     }, 1000);
+    if (is_touch_device() && !OtherUtil.getReaderConfig("isTouch")) {
+      OtherUtil.setReaderConfig("isTouch", "yes");
+    }
   }
   handleUpdateDialog = () => {
     this.setState({ isUpdated: false });
     OtherUtil.setReaderConfig("version", updateLog.version);
+  };
+  handleDrag = (isDrag: boolean) => {
+    this.setState({ isDrag });
   };
   componentWillUnmout() {
     clearTimeout(this.timer);
   }
 
   render() {
-    if (this.state.isError || this.state.isAuthed) {
-      return (
-        <div className="backup-page-finish-container">
-          <div className="backup-page-finish">
-            {this.state.isAuthed ? (
-              <span className="icon-message backup-page-finish-icon"></span>
-            ) : (
-              <span className="icon-close auth-page-close-icon"></span>
-            )}
-
-            <div className="backup-page-finish-text">
-              <Trans>
-                {this.state.isAuthed
-                  ? "Authorize Successfully"
-                  : "Authorize Failed"}
-              </Trans>
-            </div>
-            {this.state.isAuthed ? (
-              <div
-                className="token-dialog-token-text"
-                onClick={() => {
-                  copy(this.state.token);
-                  this.setState({ isCopied: true });
-                }}
-              >
-                {this.state.isCopied ? (
-                  <Trans>Copied</Trans>
-                ) : (
-                  <Trans>Copy Token</Trans>
-                )}
-              </div>
-            ) : null}
-          </div>
-        </div>
-      );
-    }
-    let { mode, notes, digests, bookmarks, covers } = this.props;
-    let { totalBooks, favoriteBooks } = this.state;
-    let shelfTitle = Object.keys(ShelfUtil.getShelf());
-    let currentShelfTitle = shelfTitle[this.props.shelfIndex + 1];
-    let shelfBooks = (ShelfUtil.getShelf()[currentShelfTitle] || []).length;
+    let { books } = this.props;
     const updateDialogProps = {
       handleUpdateDialog: this.handleUpdateDialog,
     };
@@ -164,15 +121,39 @@ class Manager extends React.Component<ManagerProps, ManagerState> {
             </span>
           </div>
           <div>
-            <img src="assets/empty.svg" alt="" className="waring-pic" />
+            <img
+              src={
+                process.env.NODE_ENV === "production"
+                  ? "./assets/empty.svg"
+                  : "../../assets/empty.svg"
+              }
+              alt=""
+              className="waring-pic"
+            />
           </div>
         </>
       );
     }
+    console.log(this.state.isDrag, !this.props.dragItem);
     return (
-      <div className="manager">
+      <div
+        className="manager"
+        onDragEnter={() => {
+          !this.props.dragItem && this.handleDrag(true);
+        }}
+      >
+        {this.state.isDrag && !this.props.dragItem && (
+          <div className="drag-background">
+            <div className="drag-info">
+              <Arrow />
+              <p className="arrow-text">
+                <Trans>Drop your books here</Trans>
+              </p>
+            </div>
+          </div>
+        )}
         <Sidebar />
-        <Header />
+        <Header {...{ handleDrag: this.handleDrag }} />
         <div className="manager-dialog-container">
           {this.props.isOpenDeleteDialog ? (
             <DeleteDialog />
@@ -184,35 +165,27 @@ class Manager extends React.Component<ManagerProps, ManagerState> {
         </div>
         {this.props.isMessage ? <MessageBox /> : null}
         {this.props.isSortDisplay ? <SortDialog /> : null}
-        {this.props.isBackup ? <BackupPage /> : null}
-        {!this.state.isUpdated && this.props.isFirst === "yes" ? (
-          <WelcomePage />
+        {this.props.isBackup ? <BackupDialog /> : null}
+        {this.props.isFirst === "yes" ? <WelcomeDialog /> : null}
+        {this.state.isUpdated && this.props.isFirst === "no" ? (
+          <UpdateDialog {...updateDialogProps} />
         ) : null}
-        {this.state.isUpdated ? <UpdateDialog {...updateDialogProps} /> : null}
         {this.props.isSettingOpen ? <SettingDialog /> : null}
-        {totalBooks === 0 ? (
-          <EmptyPage />
-        ) : covers === null &&
-          (mode === "home" || mode === "favorite" || mode === "shelf") ? (
-          <LoadingPage />
-        ) : (mode !== "shelf" || shelfBooks !== 0) &&
-          (mode === "home" ||
-            (mode === "favorite" && favoriteBooks !== 0) ||
-            mode === "shelf") ? (
-          <BookList />
-        ) : bookmarks && mode === "bookmark" ? (
-          <BookmarkPage />
-        ) : notes.filter((item) => item.notes !== "").length > 0 &&
-          mode === "note" ? (
-          <NoteList />
-        ) : digests.length > 0 && mode === "digest" ? (
-          <DigestList />
+        {(!books || books.length === 0) && this.state.totalBooks ? (
+          <Redirect to="/manager/loading" />
         ) : (
-          <EmptyPage />
+          <Switch>
+            {routes.map((ele) => (
+              <Route
+                render={() => <ele.component />}
+                key={ele.path}
+                path={ele.path}
+              />
+            ))}
+          </Switch>
         )}
       </div>
     );
   }
 }
-
 export default Manager;

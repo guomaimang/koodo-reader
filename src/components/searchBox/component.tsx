@@ -1,3 +1,4 @@
+//搜索框
 import React from "react";
 import "./searchBox.css";
 import OtherUtil from "../../utils/otherUtil";
@@ -17,7 +18,6 @@ class SearchBox extends React.Component<SearchBoxProps> {
     }
     if (this.props.mode === "nav") {
       this.props.handleSearchState(true);
-      return;
     }
     let results =
       this.props.tabMode === "note"
@@ -27,8 +27,10 @@ class SearchBox extends React.Component<SearchBoxProps> {
         : this.props.tabMode === "digest"
         ? OtherUtil.MouseNoteSearch(this.props.digests)
         : OtherUtil.MouseSearch(this.props.books);
-    this.props.handleSearchResults(results);
-    this.props.handleSearch(true);
+    if (results) {
+      this.props.handleSearchResults(results);
+      this.props.handleSearch(true);
+    }
   };
   handleKey = (event: any) => {
     if (event.keyCode !== 13) {

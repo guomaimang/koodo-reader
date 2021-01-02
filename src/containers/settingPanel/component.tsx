@@ -1,11 +1,13 @@
+//右侧阅读选项面板
 import React from "react";
 import "./settingPanel.css";
 import ThemeList from "../../components/themeList";
-import FontSizeList from "../../components/fontSizeList";
+import SliderList from "../../components/sliderList";
 import DropdownList from "../../components/dropdownList";
-import SingleControl from "../../components/singleControl";
+import ModeControl from "../../components/modeControl";
 import { SettingPanelProps, SettingPanelState } from "./interface";
 import { Trans } from "react-i18next";
+import OtherUtil from "../../utils/otherUtil";
 
 class SettingPanel extends React.Component<
   SettingPanelProps,
@@ -16,6 +18,7 @@ class SettingPanel extends React.Component<
     this.state = {
       isSupported: false,
       isAudioOn: false,
+      readerMode: OtherUtil.getReaderConfig("readerMode"),
     };
   }
   componentDidMount() {
@@ -49,11 +52,12 @@ class SettingPanel extends React.Component<
     const cfiRange = `epubcfi(${cfibase}!,${cfistart},${cfiend})`;
     this.props.currentEpub.getRange(cfiRange).then((range: any) => {
       let text = range.toString();
-      text = text.replace(/\s\s/g, "");
-      text = text.replace(/\r/g, "");
-      text = text.replace(/\n/g, "");
-      text = text.replace(/\t/g, "");
-      text = text.replace(/\f/g, "");
+      text = text
+        .replace(/\s\s/g, "")
+        .replace(/\r/g, "")
+        .replace(/\n/g, "")
+        .replace(/\t/g, "")
+        .replace(/\f/g, "");
       var msg = new SpeechSynthesisUtterance();
       msg.text = text;
       window.speechSynthesis.speak(msg);
@@ -66,8 +70,9 @@ class SettingPanel extends React.Component<
         if (!this.state.isAudioOn || this.props.isReading) {
           return;
         }
-        this.props.currentEpub.rendition.next();
-        this.handleAudio();
+        this.props.currentEpub.rendition.next().then(() => {
+          this.handleAudio();
+        });
       };
     });
   };
@@ -78,8 +83,9 @@ class SettingPanel extends React.Component<
           <div className="setting-panel-title">
             <Trans>Reading Option</Trans>
           </div>
-          <SingleControl />
-          {this.state.isSupported && this.props.locations ? (
+          <ModeControl />
+
+          {this.state.isSupported ? (
             <div className="single-control-switch-container">
               <span className="single-control-switch-title">
                 {this.state.isAudioOn ? (
@@ -92,8 +98,14 @@ class SettingPanel extends React.Component<
               <span
                 className="single-control-switch"
                 onClick={() => {
-                  this.handleChangeAudio();
+                  if (this.props.locations) {
+                    this.handleChangeAudio();
+                  } else {
+                    this.props.handleMessage("Audio is not ready yet");
+                    this.props.handleMessageBox(true);
+                  }
                 }}
+                style={this.props.locations ? {} : { opacity: 0.5 }}
               >
                 <span
                   className="single-control-button"
@@ -103,7 +115,23 @@ class SettingPanel extends React.Component<
             </div>
           ) : null}
           <ThemeList />
-          <FontSizeList />
+          <SliderList
+            {...{
+              maxValue: 31,
+              minValue: 13,
+              mode: "fontSize",
+            }}
+          />
+          {this.state.readerMode && this.state.readerMode !== "double" ? (
+            <SliderList
+              {...{
+                maxValue: 2,
+                minValue: 1,
+                mode: "scale",
+              }}
+            />
+          ) : null}
+
           <DropdownList />
         </div>
       </div>
